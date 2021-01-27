@@ -185,7 +185,7 @@ def positions(archivo=1010902, dist = 100):
     return mot, zero, n, mult
 
 def exponential(x,n = 1, coef = 1):
-    return np.exp(-coef*np.power(x,n))
+    return np.exp(-np.power(x/coef,n))
 
 def potential(x, n = 1, coef = 1):
     return np.power(coef*x,-n)
@@ -208,7 +208,7 @@ def rij(mult=[1,1,3], p = np.zeros((1,1,1)), zero = 1, dist=100,
         r = np.linalg.norm(r,axis=2)
     
         for j,atrad_j in zip(range(1,len(l)), radii):
-            coef = (atrad_i + atrad_j)**(-2)
+            coef = (atrad_i + atrad_j)
             init = l[j-1]
             fin = l[j]
             rj = r[init:fin,:]
@@ -231,6 +231,7 @@ def rij(mult=[1,1,3], p = np.zeros((1,1,1)), zero = 1, dist=100,
 df_name = input('Provide the name of the pickle database with extension:'+'\n')
 cutoff_radius = input('Provide an integer cutoff radius in angstroms [default is 25]:'+'\n')
 power = input('Provide the exponent value of the local function[default is 1]:'+'\n')
+diffelec = input('Do you want to incorporate the electronegativity difference to the local function [default False, else type True]:'+'\n')
 
 if not cutoff_radius:
     Rc = 25
@@ -293,46 +294,49 @@ np.save('Xrij' + str(exponente) + '_' + cutoff_radius , r)
 print('Radial part computed in ', time.time()-start, ' s')
 print('Radial part saved as ' + str(exponente) + '_' + cutoff_radius)
 
-print('Local function will be computed now')
-start = time.time()
+if diffelec:
+	print('Local function will be computed now')
+	start = time.time()
 
-rij = copy.deepcopy(r)
-z = X[:,:,0]
-zeff = np.zeros(rij.shape)
-        
-for item in range(z.shape[0]):
-    t = z[item][:,np.newaxis]
-    delec = np.repeat(t[:,np.newaxis],int(number),axis=2) - \
-                        np.repeat(t[:,np.newaxis],int(number),axis=2).T
-    delec = delec.reshape((delec.shape[0],delec.shape[2]))
-        
-    zeff[item] = delec
-f = np.multiply(zeff,rij)
-        
-np.save('frdelec_rij'+ str(exponente) + '_' + str(cutoff_radius) + '-or.npy', f)
-print('Local function computed in ', time.time()-start, ' s')
-print('Local function was saved as '+ 'frdelec_rij'+ str(exponente) + '_' + \
-      str(cutoff_radius) + '-or.npy')
+	rij = copy.deepcopy(r)
+	z = X[:,:,0]
+	zeff = np.zeros(rij.shape)
+	        
+	for item in range(z.shape[0]):
+	    t = z[item][:,np.newaxis]
+	    delec = np.repeat(t[:,np.newaxis],int(number),axis=2) - \
+	                        np.repeat(t[:,np.newaxis],int(number),axis=2).T
+	    delec = delec.reshape((delec.shape[0],delec.shape[2]))
+	        
+	    zeff[item] = delec
+	f = np.multiply(zeff,rij)
+	        
+	np.save('frdelec_rij'+ str(exponente) + '_' + str(cutoff_radius) + '-or.npy', f)
+	print('Local function computed in ', time.time()-start, ' s')
+	print('Local function was saved as '+ 'frdelec_rij'+ str(exponente) + '_' + \
+	      str(cutoff_radius) + '-or.npy')
 
-print('Deleting the diagonal elements of matrices...')
-fn = np.zeros((f.shape[0], f.shape[1], f.shape[2] - 1))
-        
-for item in range(f.shape[0]):
-    delec = f[item]
-    delec = delec[~np.eye(delec.shape[0], dtype=bool)].reshape(delec.shape[0],-1)
-            
-    fn[item] = delec
-            
-np.save('frdelec_rij' + str(exponente) + '_' + str(cutoff_radius) + '.npy', fn)
-print('Deletion completed. Creating dictionary....')
+	print('Deleting the diagonal elements of matrices...')
+	fn = np.zeros((f.shape[0], f.shape[1], f.shape[2] - 1))
+	        
+	for item in range(f.shape[0]):
+	    delec = f[item]
+	    delec = delec[~np.eye(delec.shape[0], dtype=bool)].reshape(delec.shape[0],-1)
+	            
+	    fn[item] = delec
+	            
+	np.save('frdelec_rij' + str(exponente) + '_' + str(cutoff_radius) + '.npy', fn)
+	print('Deletion completed. Creating dictionary....')
+else:
+	f = copy.deepcopy(r)
 
 diccio = dict()
-
 for row in range(df.shape[0]):
     cif = df['cif'][row]
     matriz = f[row]
     sitios = df['sitios'][row]
     matriz = matriz[-sitios:,-sitios:]
+    diccio[row] = matriz
     
 np.save('fij_' + str(exponente) + '_' + cutoff_radius + '_diccio', diccio)
 print('Dictionary  created. EXITING PROGRAM..............................')
