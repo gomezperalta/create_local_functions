@@ -336,7 +336,7 @@ for row in range(df.shape[0]):
     matriz = f[row]
     sitios = df['sitios'][row]
     matriz = matriz[-sitios:,-sitios:]
-    diccio[row] = matriz
+    diccio[cif] = matriz
     
 np.save('fij_' + str(exponente) + '_' + cutoff_radius + '_diccio', diccio)
 print('Dictionary  created. EXITING PROGRAM..............................')
