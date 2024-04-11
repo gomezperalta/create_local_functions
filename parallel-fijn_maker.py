@@ -287,12 +287,6 @@ def create_rij(row = 0):#, directorio ='./', diffelec = False):
     except:
         pass
     return
-'''
-for row in range(df.shape[0]):
-    print(row)
-    create_rij(row = row)
-'''
-#args = [(row, new_directory, bool(diffelec)) for row in range(df.shape[0])]
 
 if __name__ == "__main__":
 
